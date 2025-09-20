@@ -1,0 +1,44 @@
+'use client'
+
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import Header from '@/components/layout/Header'
+import AdminDashboard from '@/components/dashboard/AdminDashboard'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+
+export default function AdminDashboardPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (status === 'loading') return
+
+    if (!session) {
+      router.push('/auth/login')
+      return
+    }
+
+    if (session.user?.role !== 'admin') {
+      router.push('/')
+      return
+    }
+  }, [session, status, router])
+
+  if (status === 'loading') {
+    return <LoadingSpinner />
+  }
+
+  if (!session || session.user?.role !== 'admin') {
+    return null
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-lightBlue-50 to-lightBlue-100">
+      <Header />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <AdminDashboard user={session.user} />
+      </main>
+    </div>
+  )
+}
