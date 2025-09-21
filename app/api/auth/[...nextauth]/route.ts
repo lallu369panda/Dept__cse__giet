@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
+import { prisma } from '@/lib/prisma'
 
 // Extend the built-in session types
 declare module 'next-auth' {
@@ -14,7 +15,8 @@ declare module 'next-auth' {
       studentId?: string
       department?: string
       semester?: string
-      designation?: string
+      linkedin?: string
+      github?: string
     }
   }
 
@@ -27,7 +29,8 @@ declare module 'next-auth' {
     studentId?: string
     department?: string
     semester?: string
-    designation?: string
+    linkedin?: string
+    github?: string
   }
 }
 
@@ -37,11 +40,13 @@ declare module 'next-auth/jwt' {
     studentId?: string
     department?: string
     semester?: string
-    designation?: string
+    linkedin?: string
+    github?: string
   }
 }
 
 const handler = NextAuth({
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -51,49 +56,71 @@ const handler = NextAuth({
         role: { label: 'Role', type: 'text' }
       },
       async authorize(credentials) {
+        console.log('🔐 Auth attempt:', { email: credentials?.email, role: credentials?.role })
+        
         if (!credentials?.email || !credentials?.password) {
+          console.log('❌ Missing credentials')
           return null
         }
 
-        // Demo users for testing
-        const demoUsers = [
-          {
-            id: '1',
-            email: 'student@demo.com',
-            password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
-            name: 'John Student',
-            role: 'student',
-            studentId: 'CSE2024001',
-            department: 'CSE',
-            semester: '3'
-          },
-          {
-            id: '2',
-            email: 'faculty@demo.com',
-            password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
-            name: 'Dr. Jane Faculty',
-            role: 'faculty',
-            department: 'CSE',
-            designation: 'Professor'
-          }
-        ]
+        try {
+          // First check database for registered users
+          const dbUser = await prisma.user.findUnique({
+            where: { email: credentials.email.toLowerCase() }
+          })
 
-        const user = demoUsers.find(u => u.email === credentials.email)
-        
-        if (user && await bcrypt.compare(credentials.password, user.password)) {
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            studentId: user.studentId,
-            department: user.department,
-            semester: user.semester,
-            designation: user.designation
+          if (dbUser && await bcrypt.compare(credentials.password, dbUser.password)) {
+            console.log('✅ Database user login successful')
+            return {
+              id: dbUser.id,
+              email: dbUser.email,
+              name: `${dbUser.firstName} ${dbUser.lastName}`,
+              role: dbUser.role,
+              studentId: dbUser.studentId || undefined,
+              department: dbUser.department,
+              semester: dbUser.semester || undefined,
+              linkedin: undefined,
+              github: undefined
+            }
           }
+
+          // Fallback to demo users for testing
+          const demoUsers = [
+            {
+              id: '1',
+              email: 'student@demo.com',
+              password: 'password123',
+              name: 'John Student',
+              role: 'student',
+              studentId: 'CSE2024001',
+              department: 'CSE',
+              semester: '3'
+            }
+          ]
+
+          const demoUser = demoUsers.find(u => u.email.toLowerCase() === credentials.email.toLowerCase())
+          
+          if (demoUser && demoUser.password === credentials.password) {
+            console.log('✅ Demo user login successful')
+            return {
+              id: demoUser.id,
+              email: demoUser.email,
+              name: demoUser.name,
+              role: demoUser.role,
+              studentId: demoUser.studentId || undefined,
+              department: demoUser.department,
+              semester: demoUser.semester || undefined,
+              linkedin: 'https://linkedin.com/in/demo-student',
+              github: 'https://github.com/demo-student'
+            }
+          }
+
+          console.log('❌ Authentication failed')
+          return null
+        } catch (error) {
+          console.error('Auth error:', error)
+          return null
         }
-
-        return null
       }
     })
   ],
@@ -104,7 +131,8 @@ const handler = NextAuth({
         token.studentId = user.studentId
         token.department = user.department
         token.semester = user.semester
-        token.designation = user.designation
+        token.linkedin = user.linkedin
+        token.github = user.github
       }
       return token
     },
@@ -114,7 +142,8 @@ const handler = NextAuth({
         session.user.studentId = token.studentId
         session.user.department = token.department
         session.user.semester = token.semester
-        session.user.designation = token.designation
+        session.user.linkedin = token.linkedin
+        session.user.github = token.github
       }
       return session
     }

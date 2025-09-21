@@ -21,9 +21,9 @@ export default function Features() {
     },
     {
       icon: Users,
-      title: 'Faculty Management',
-      description: 'Comprehensive tools for faculty to manage students, upload results, and maintain academic records efficiently.',
-      features: ['Student Management', 'Result Upload', 'Notice Creation', 'Attendance Management']
+      title: 'Student Community',
+      description: 'Tools for students to connect with peers, join study groups, and participate in departmental activities.',
+      features: ['Student Directory', 'Study Groups', 'Event Participation', 'Peer Communication']
     },
     {
       icon: BarChart3,
@@ -54,27 +54,27 @@ export default function Features() {
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white/30">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-16 px-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Comprehensive Features
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
             Everything you need for academic management in one centralized platform
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-4">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 card-hover"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 card-hover"
             >
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                <feature.icon className="h-8 w-8 text-white" />
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center mb-4 sm:mb-6">
+                <feature.icon className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
               </div>
               
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">{feature.title}</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">{feature.description}</p>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">{feature.title}</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">{feature.description}</p>
               
               <ul className="space-y-2">
                 {feature.features.map((item, itemIndex) => (

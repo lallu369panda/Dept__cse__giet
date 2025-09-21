@@ -24,11 +24,14 @@ export default function Header() {
           {/* Logo */}
           <div className="flex items-center space-x-2">
             <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-2 rounded-lg">
-              <GraduationCap className="h-8 w-8 text-white" />
+              <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">CSE Department</h1>
-              <p className="text-sm text-gray-600">Computer Science & Engineering</p>
+            <div className="hidden sm:block">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900">CSE Department</h1>
+              <p className="text-xs sm:text-sm text-gray-600">Computer Science & Engineering</p>
+            </div>
+            <div className="sm:hidden">
+              <h1 className="text-lg font-bold text-gray-900">CSE</h1>
             </div>
           </div>
 
@@ -60,7 +63,7 @@ export default function Header() {
                   </span>
                 </div>
                 <button
-                  onClick={() => signOut()}
+                  onClick={() => signOut({ callbackUrl: '/' })}
                   className="flex items-center space-x-1 text-gray-600 hover:text-red-600 transition-colors duration-200"
                 >
                   <LogOut className="h-4 w-4" />
@@ -123,7 +126,7 @@ export default function Header() {
                     </span>
                   </div>
                   <button
-                    onClick={() => signOut()}
+                    onClick={() => signOut({ callbackUrl: '/' })}
                     className="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors duration-200"
                   >
                     <LogOut className="h-4 w-4" />

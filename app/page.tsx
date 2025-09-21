@@ -19,12 +19,8 @@ export default function Home() {
     if (status === 'loading') return
     
     if (session) {
-      // Redirect based on user role
-      if (session.user.role === 'student') {
-        router.push('/dashboard/student')
-      } else if (session.user.role === 'faculty') {
-        router.push('/dashboard/faculty')
-      }
+      // Redirect to student dashboard (only role available)
+      router.push('/dashboard/student')
     } else {
       setLoading(false)
     }

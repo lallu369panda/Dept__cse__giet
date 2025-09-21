@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String   @unique
+  phone       String
+  password    String
+  role        String   @default("student") // Only students
+  department  String   @default("CSE")
+  
+  // Student fields
+  studentId   String?  @unique
+  semester    String?
+  
+  // Social media profiles
+  linkedin    String?  @default("https://linkedin.com/in/your-profile")
+  github      String?  @default("https://github.com/your-username")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  date        DateTime
+  time        String
+  location    String
+  type        String
+  category    String
+  attendees   Int      @default(0)
+  maxAttendees Int?
+  image       String?
+  featured    Boolean  @default(false)
+  status      String   @default("upcoming")
+  organizer   String
+  contactEmail String
+  requirements String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("events")
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  type        String   @default("general")
+  priority    String   @default("medium")
+  targetRole  String?  // student, faculty, all
+  isActive    Boolean  @default(true)
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("announcements")
+}
