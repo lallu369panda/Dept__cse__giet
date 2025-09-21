@@ -24,8 +24,6 @@ export default function Home() {
         router.push('/dashboard/student')
       } else if (session.user.role === 'faculty') {
         router.push('/dashboard/faculty')
-      } else if (session.user.role === 'admin') {
-        router.push('/dashboard/admin')
       }
     } else {
       setLoading(false)

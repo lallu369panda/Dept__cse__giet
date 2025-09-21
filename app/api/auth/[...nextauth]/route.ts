@@ -2,6 +2,45 @@ import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 
+// Extend the built-in session types
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string
+      name?: string | null
+      email?: string | null
+      image?: string | null
+      role?: string
+      studentId?: string
+      department?: string
+      semester?: string
+      designation?: string
+    }
+  }
+
+  interface User {
+    id: string
+    name?: string | null
+    email?: string | null
+    image?: string | null
+    role?: string
+    studentId?: string
+    department?: string
+    semester?: string
+    designation?: string
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    role?: string
+    studentId?: string
+    department?: string
+    semester?: string
+    designation?: string
+  }
+}
+
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
@@ -36,14 +75,6 @@ const handler = NextAuth({
             role: 'faculty',
             department: 'CSE',
             designation: 'Professor'
-          },
-          {
-            id: '3',
-            email: 'admin@demo.com',
-            password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password123
-            name: 'Admin User',
-            role: 'admin',
-            department: 'CSE'
           }
         ]
 
@@ -78,7 +109,7 @@ const handler = NextAuth({
       return token
     },
     async session({ session, token }) {
-      if (token) {
+      if (token && session.user) {
         session.user.role = token.role
         session.user.studentId = token.studentId
         session.user.department = token.department
@@ -89,8 +120,7 @@ const handler = NextAuth({
     }
   },
   pages: {
-    signIn: '/auth/login',
-    signUp: '/auth/register'
+    signIn: '/auth/login'
   },
   session: {
     strategy: 'jwt'

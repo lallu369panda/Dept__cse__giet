@@ -40,8 +40,6 @@ export default function LoginPage() {
           router.push('/dashboard/student')
         } else if (session?.user?.role === 'faculty') {
           router.push('/dashboard/faculty')
-        } else if (session?.user?.role === 'admin') {
-          router.push('/dashboard/admin')
         }
       }
     } catch (error) {
@@ -93,7 +91,6 @@ export default function LoginPage() {
               >
                 <option value="student">Student</option>
                 <option value="faculty">Faculty</option>
-                <option value="admin">Admin</option>
               </select>
             </div>
 
@@ -198,7 +195,6 @@ export default function LoginPage() {
                   <p className="font-medium mb-1">Demo Credentials:</p>
                   <p>Student: student@demo.com / password123</p>
                   <p>Faculty: faculty@demo.com / password123</p>
-                  <p>Admin: admin@demo.com / password123</p>
                 </div>
               </div>
             </div>
