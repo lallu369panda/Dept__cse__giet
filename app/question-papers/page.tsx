@@ -42,6 +42,13 @@ export default function QuestionPapersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState('question-papers')
   const [expandedSemester, setExpandedSemester] = useState<number | null>(null)
+  const [questionPapers, setQuestionPapers] = useState<any[]>([])
+  const [notes, setNotes] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [notesLoading, setNotesLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [notesError, setNotesError] = useState<string | null>(null)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
   // BTech Semesters
   const semesters = [
@@ -55,175 +62,136 @@ export default function QuestionPapersPage() {
     { id: 8, name: '8th Semester', subjects: ['Final Year Project', 'Industrial Training', 'Research Methodology', 'Ethics in Computing', 'Entrepreneurship'] }
   ]
 
-  // Question Papers Data
-  const questionPapers = [
-    {
-      id: 1,
-      title: 'Data Structures - Mid Term Exam',
-      subject: 'Data Structures',
-      semester: 3,
-      year: '2024',
-      type: 'Mid Term',
-      duration: '3 hours',
-      marks: '100',
-      difficulty: 'Medium',
-      fileSize: '2.5 MB',
-      downloads: 245,
-      rating: 4.5,
-      uploadedDate: '2024-01-15',
-      fileUrl: '/api/placeholder/400/600',
-      description: 'Comprehensive mid-term examination covering arrays, linked lists, stacks, and queues.'
-    },
-    {
-      id: 2,
-      title: 'Database Management - Final Exam',
-      subject: 'Database Management',
-      semester: 4,
-      year: '2023',
-      type: 'Final Exam',
-      duration: '3 hours',
-      marks: '100',
-      difficulty: 'Hard',
-      fileSize: '3.2 MB',
-      downloads: 189,
-      rating: 4.3,
-      uploadedDate: '2023-12-10',
-      fileUrl: '/api/placeholder/400/600',
-      description: 'Final examination covering SQL, normalization, transactions, and database design.'
-    },
-    {
-      id: 3,
-      title: 'Operating Systems - Quiz 1',
-      subject: 'Operating Systems',
-      semester: 4,
-      year: '2024',
-      type: 'Quiz',
-      duration: '1 hour',
-      marks: '50',
-      difficulty: 'Easy',
-      fileSize: '1.8 MB',
-      downloads: 156,
-      rating: 4.7,
-      uploadedDate: '2024-02-20',
-      fileUrl: '/api/placeholder/400/600',
-      description: 'Quiz covering process management, memory management, and file systems.'
-    },
-    {
-      id: 4,
-      title: 'Machine Learning - Assignment',
-      subject: 'Machine Learning',
-      semester: 5,
-      year: '2024',
-      type: 'Assignment',
-      duration: '1 week',
-      marks: '25',
-      difficulty: 'Medium',
-      fileSize: '1.2 MB',
-      downloads: 98,
-      rating: 4.2,
-      uploadedDate: '2024-03-05',
-      fileUrl: '/api/placeholder/400/600',
-      description: 'Assignment on supervised learning algorithms and model evaluation.'
-    },
-    {
-      id: 5,
-      title: 'Computer Networks - Lab Exam',
-      subject: 'Computer Networks',
-      semester: 4,
-      year: '2023',
-      type: 'Lab Exam',
-      duration: '2 hours',
-      marks: '75',
-      difficulty: 'Medium',
-      fileSize: '2.1 MB',
-      downloads: 134,
-      rating: 4.4,
-      uploadedDate: '2023-11-25',
-      fileUrl: '/api/placeholder/400/600',
-      description: 'Practical examination on network configuration and troubleshooting.'
-    },
-    {
-      id: 6,
-      title: 'Web Technologies - Project Viva',
-      subject: 'Web Technologies',
-      semester: 5,
-      year: '2024',
-      type: 'Viva',
-      duration: '30 minutes',
-      marks: '50',
-      difficulty: 'Medium',
-      fileSize: '0.8 MB',
-      downloads: 67,
-      rating: 4.6,
-      uploadedDate: '2024-03-15',
-      fileUrl: '/api/placeholder/400/600',
-      description: 'Viva voce examination for web development project presentation.'
-    }
-  ]
+  // Fetch question papers from API
+  const fetchQuestionPapers = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const queryParams = new URLSearchParams()
+      if (selectedSemester !== 'all') queryParams.append('semester', selectedSemester)
+      if (selectedSubject !== 'all') queryParams.append('subject', selectedSubject)
+      if (selectedYear !== 'all') queryParams.append('year', selectedYear)
+      if (searchTerm) queryParams.append('search', searchTerm)
 
-  // Notes Data
-  const notes = [
-    {
-      id: 1,
-      title: 'Data Structures Complete Notes',
-      subject: 'Data Structures',
-      semester: 3,
-      year: '2024',
-      type: 'Complete Notes',
-      fileSize: '15.2 MB',
-      downloads: 456,
-      rating: 4.8,
-      uploadedDate: '2024-01-10',
-      fileUrl: '/api/placeholder/400/600',
-      description: 'Comprehensive notes covering all topics from arrays to advanced data structures.',
-      chapters: ['Arrays', 'Linked Lists', 'Stacks & Queues', 'Trees', 'Graphs', 'Hashing']
-    },
-    {
-      id: 2,
-      title: 'Database Management System Notes',
-      subject: 'Database Management',
-      semester: 4,
-      year: '2024',
-      type: 'Complete Notes',
-      fileSize: '22.1 MB',
-      downloads: 389,
-      rating: 4.7,
-      uploadedDate: '2024-01-15',
-      fileUrl: '/api/placeholder/400/600',
-      description: 'Detailed notes on database concepts, SQL, normalization, and transactions.',
-      chapters: ['Introduction to DBMS', 'ER Model', 'Relational Model', 'SQL', 'Normalization', 'Transactions']
-    },
-    {
-      id: 3,
-      title: 'Operating Systems Quick Reference',
-      subject: 'Operating Systems',
-      semester: 4,
-      year: '2024',
-      type: 'Quick Reference',
-      fileSize: '8.5 MB',
-      downloads: 234,
-      rating: 4.5,
-      uploadedDate: '2024-02-01',
-      fileUrl: '/api/placeholder/400/600',
-      description: 'Quick reference guide for OS concepts and important formulas.',
-      chapters: ['Process Management', 'Memory Management', 'File Systems', 'Deadlocks', 'Scheduling']
-    },
-    {
-      id: 4,
-      title: 'Machine Learning Algorithms',
-      subject: 'Machine Learning',
-      semester: 5,
-      year: '2024',
-      type: 'Algorithm Notes',
-      fileSize: '18.7 MB',
-      downloads: 312,
-      rating: 4.6,
-      uploadedDate: '2024-02-10',
-      fileUrl: '/api/placeholder/400/600',
-      description: 'Detailed notes on various ML algorithms with examples and implementations.',
-      chapters: ['Linear Regression', 'Logistic Regression', 'Decision Trees', 'Neural Networks', 'Clustering']
+      const response = await fetch(`/api/question-papers?${queryParams.toString()}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch question papers')
+      }
+      
+      const data = await response.json()
+      setQuestionPapers(data.papers || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load question papers')
+      console.error('Error fetching question papers:', err)
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
+
+  // Load question papers on component mount and when filters change
+  useEffect(() => {
+    if (activeTab === 'question-papers') {
+      fetchQuestionPapers()
+    } else if (activeTab === 'notes') {
+      fetchNotes()
+    }
+  }, [activeTab, selectedSemester, selectedSubject, selectedYear, searchTerm])
+
+  // Handle download and update download count
+  const handleDownload = async (paper: any) => {
+    try {
+      // Validate file URL exists
+      if (!paper.fileUrl) {
+        alert('File URL not available for this question paper')
+        return
+      }
+
+      // Set downloading state
+      setDownloadingId(paper.id)
+
+      console.log(`Downloading: ${paper.title}`)
+      console.log(`File URL: ${paper.fileUrl}`)
+
+      // Track download count first
+      const response = await fetch('/api/question-papers', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: paper.id }),
+      })
+
+      if (response.ok) {
+        console.log('Download count updated successfully')
+      }
+
+      // Redirect to the file URL from database
+      // This will either download the file or open it in a new tab depending on the file type
+      window.open(paper.fileUrl, '_blank')
+      
+      console.log(`Successfully initiated download for: ${paper.title}`)
+
+      // Refresh the list to update download count
+      setTimeout(() => {
+        fetchQuestionPapers()
+        setDownloadingId(null) // Clear downloading state
+      }, 1000) // Small delay to allow the download count update to process
+
+    } catch (error) {
+      console.error('Error downloading file:', error)
+      alert('Error downloading file. Please try again.')
+      setDownloadingId(null) // Clear downloading state on error
+    }
+  }
+
+  // Handle notes download
+  const handleNotesDownload = async (note: any) => {
+    try {
+      // Validate file URL exists
+      if (!note.fileUrl) {
+        alert('File URL not available for these notes')
+        return
+      }
+
+      console.log(`Downloading: ${note.title}`)
+      console.log(`File URL: ${note.fileUrl}`)
+
+      // Redirect to the file URL from database
+      window.open(note.fileUrl, '_blank')
+      
+      console.log(`Successfully initiated download for: ${note.title}`)
+
+    } catch (error) {
+      console.error('Error downloading notes:', error)
+      alert('Error downloading notes. Please try again.')
+    }
+  }
+
+  // Fetch notes from API
+  const fetchNotes = async () => {
+    setNotesLoading(true)
+    setNotesError(null)
+    try {
+      const queryParams = new URLSearchParams()
+      if (selectedSemester !== 'all') queryParams.append('semester', selectedSemester)
+      if (selectedSubject !== 'all') queryParams.append('subject', selectedSubject)
+      if (selectedYear !== 'all') queryParams.append('year', selectedYear)
+      if (searchTerm) queryParams.append('search', searchTerm)
+
+      const response = await fetch(`/api/notes?${queryParams.toString()}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch notes')
+      }
+      
+      const data = await response.json()
+      setNotes(data.notes || [])
+    } catch (err) {
+      setNotesError(err instanceof Error ? err.message : 'Failed to load notes')
+      console.error('Error fetching notes:', err)
+    } finally {
+      setNotesLoading(false)
+    }
+  }
 
   // Academic Calendar
   const academicCalendar = [
@@ -249,24 +217,11 @@ export default function QuestionPapersPage() {
     }
   ]
 
-  // Filter data based on selected criteria
-  const filteredPapers = questionPapers.filter(paper => {
-    const matchesSemester = selectedSemester === 'all' || paper.semester.toString() === selectedSemester
-    const matchesSubject = selectedSubject === 'all' || paper.subject === selectedSubject
-    const matchesYear = selectedYear === 'all' || paper.year === selectedYear
-    const matchesSearch = paper.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         paper.subject.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesSemester && matchesSubject && matchesYear && matchesSearch
-  })
+  // Since filtering is now done server-side via API, we can use papers directly
+  const filteredPapers = questionPapers
 
-  const filteredNotes = notes.filter(note => {
-    const matchesSemester = selectedSemester === 'all' || note.semester.toString() === selectedSemester
-    const matchesSubject = selectedSubject === 'all' || note.subject === selectedSubject
-    const matchesYear = selectedYear === 'all' || note.year === selectedYear
-    const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         note.subject.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesSemester && matchesSubject && matchesYear && matchesSearch
-  })
+  // Since filtering is now done server-side via API for notes too, we can use notes directly
+  const filteredNotes = notes
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -368,7 +323,7 @@ export default function QuestionPapersPage() {
                   className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Subjects</option>
-                  {Array.from(new Set([...questionPapers, ...notes].map(item => item.subject))).map(subject => (
+                  {Array.from(new Set(questionPapers.map(item => item.subject))).map(subject => (
                     <option key={subject} value={subject}>{subject}</option>
                   ))}
                 </select>
@@ -380,7 +335,7 @@ export default function QuestionPapersPage() {
                   className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Years</option>
-                  {Array.from(new Set([...questionPapers, ...notes].map(item => item.year))).sort().reverse().map(year => (
+                  {Array.from(new Set(questionPapers.map(item => item.year))).sort().reverse().map(year => (
                     <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
@@ -395,8 +350,58 @@ export default function QuestionPapersPage() {
             <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
               Question Papers & Exam Papers
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPapers.map((paper) => (
+            
+            {/* Loading State */}
+            {loading && (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <span className="ml-3 text-gray-600">Loading question papers...</span>
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Question Papers</h3>
+                <p className="text-red-600 mb-4">{error}</p>
+                <button 
+                  onClick={fetchQuestionPapers}
+                  className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loading && !error && filteredPapers.length === 0 && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-12 text-center">
+                <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">No Question Papers Found</h3>
+                <p className="text-gray-500 mb-6">
+                  {searchTerm || selectedSemester !== 'all' || selectedSubject !== 'all' || selectedYear !== 'all'
+                    ? 'Try adjusting your filters to find more question papers.'
+                    : 'No question papers are available in the database yet.'}
+                </p>
+                <button 
+                  onClick={() => {
+                    setSearchTerm('')
+                    setSelectedSemester('all')
+                    setSelectedSubject('all')
+                    setSelectedYear('all')
+                  }}
+                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
+
+            {/* Question Papers Grid */}
+            {!loading && !error && filteredPapers.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredPapers.map((paper) => (
                 <div key={paper.id} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden group hover:shadow-2xl transition-all duration-300">
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -445,7 +450,10 @@ export default function QuestionPapersPage() {
                     </div>
                     
                     <div className="flex gap-2">
-                      <button className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 flex items-center justify-center group">
+                      <button 
+                        onClick={() => handleDownload(paper)}
+                        className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 flex items-center justify-center group"
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </button>
@@ -456,7 +464,8 @@ export default function QuestionPapersPage() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -466,7 +475,57 @@ export default function QuestionPapersPage() {
             <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
               Semester-wise Notes
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            {/* Loading State */}
+            {notesLoading && (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+                <span className="ml-3 text-gray-600">Loading notes...</span>
+              </div>
+            )}
+
+            {/* Error State */}
+            {notesError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center mb-8">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Notes</h3>
+                <p className="text-red-600 mb-4">{notesError}</p>
+                <button 
+                  onClick={fetchNotes}
+                  className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!notesLoading && !notesError && filteredNotes.length === 0 && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-12 text-center mb-8">
+                <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">No Notes Found</h3>
+                <p className="text-gray-500 mb-6">
+                  {searchTerm || selectedSemester !== 'all' || selectedSubject !== 'all' || selectedYear !== 'all'
+                    ? 'Try adjusting your filters to find more notes.'
+                    : 'No notes are available in the database yet.'}
+                </p>
+                <button 
+                  onClick={() => {
+                    setSearchTerm('')
+                    setSelectedSemester('all')
+                    setSelectedSubject('all')
+                    setSelectedYear('all')
+                  }}
+                  className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
+
+            {/* Notes Grid */}
+            {!notesLoading && !notesError && filteredNotes.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredNotes.map((note) => (
                 <div key={note.id} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden group hover:shadow-2xl transition-all duration-300">
                   <div className="p-6">
@@ -500,7 +559,7 @@ export default function QuestionPapersPage() {
                     <div className="mb-4">
                       <h4 className="text-sm font-semibold text-gray-900 mb-2">Chapters Covered:</h4>
                       <div className="flex flex-wrap gap-1">
-                        {note.chapters.map((chapter, idx) => (
+                        {note.chapters.map((chapter: string, idx: number) => (
                           <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                             {chapter}
                           </span>
@@ -521,7 +580,10 @@ export default function QuestionPapersPage() {
                     </div>
                     
                     <div className="flex gap-2">
-                      <button className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-200 flex items-center justify-center group">
+                      <button 
+                        onClick={() => handleNotesDownload(note)}
+                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-200 flex items-center justify-center group"
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </button>
@@ -532,7 +594,8 @@ export default function QuestionPapersPage() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            )}
           </div>
         )}
 

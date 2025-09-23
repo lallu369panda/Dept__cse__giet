@@ -2,6 +2,7 @@
 
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import { useEvents } from '@/hooks/useEvents'
 import { 
   Calendar, 
   MapPin, 
@@ -33,53 +34,34 @@ export default function EventsPage() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+  
+  // Get real-time events data
+  const { events, upcomingEvents, stats, loading } = useEvents()
 
-  // Event photos for slideshow with rotation animation
-  const eventPhotos = [
+  // Featured events for slideshow (use real data)
+  const featuredEvents = upcomingEvents.slice(0, 5) // Show first 5 upcoming events
+  const eventPhotos = featuredEvents.length > 0 ? featuredEvents.map(event => ({
+    src: event.image || '/api/placeholder/800/500',
+    alt: event.title,
+    title: event.title,
+    description: event.description,
+    date: new Date(event.date).toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    }),
+    attendees: `${event.maxAttendees || 100}+`,
+    type: event.type
+  })) : [
     {
-      src: '/api/placeholder/800/500',
-      alt: 'Tech Symposium 2024',
-      title: 'Tech Symposium 2024',
-      description: 'Annual technical symposium featuring latest innovations in computer science and engineering',
-      date: 'March 15, 2024',
-      attendees: '150+',
-      type: 'Conference'
-    },
-    {
-      src: '/api/placeholder/800/500',
-      alt: 'Hackathon Competition',
-      title: 'Hackathon Competition',
-      description: '48-hour coding competition for students to showcase their programming skills',
-      date: 'March 22, 2024',
-      attendees: '80+',
-      type: 'Competition'
-    },
-    {
-      src: '/api/placeholder/800/500',
-      alt: 'Industry Workshop',
-      title: 'Industry Workshop',
-      description: 'Workshop on emerging technologies with industry experts and hands-on sessions',
-      date: 'March 28, 2024',
-      attendees: '60+',
-      type: 'Workshop'
-    },
-    {
-      src: '/api/placeholder/800/500',
-      alt: 'Alumni Meet 2024',
-      title: 'Alumni Meet 2024',
-      description: 'Annual alumni gathering with networking opportunities and career guidance sessions',
-      date: 'April 5, 2024',
-      attendees: '200+',
-      type: 'Networking'
-    },
-    {
-      src: '/api/placeholder/800/500',
-      alt: 'Project Exhibition',
-      title: 'Project Exhibition',
-      description: 'Showcase of innovative student projects and research work',
-      date: 'April 12, 2024',
-      attendees: '120+',
-      type: 'Exhibition'
+      src: '/images/giet-2025-conference.png',
+      alt: 'GIET Events',
+      title: 'Exciting Events Coming Soon',
+      description: 'Stay tuned for upcoming events and activities from the Department of Computer Science and Engineering',
+      date: 'Coming Soon',
+      attendees: 'Open to All',
+      type: 'Department Events'
     }
   ]
 
@@ -151,91 +133,24 @@ export default function EventsPage() {
     { id: 'cultural', name: 'Cultural', icon: Music }
   ]
 
-  // All events data
-  const allEvents = [
-    {
-      id: 1,
-      title: 'Tech Symposium 2024',
-      date: '2024-03-15',
-      time: '09:00 AM',
-      location: 'Main Auditorium',
-      description: 'Annual technical symposium featuring latest innovations in computer science and engineering.',
-      attendees: 150,
-      type: 'Conference',
-      category: 'conference',
-      image: '/api/placeholder/400/250',
-      featured: true
-    },
-    {
-      id: 2,
-      title: 'Hackathon Competition',
-      date: '2024-03-22',
-      time: '10:00 AM',
-      location: 'Computer Lab 1',
-      description: '48-hour coding competition for students to showcase their programming skills.',
-      attendees: 80,
-      type: 'Competition',
-      category: 'competition',
-      image: '/api/placeholder/400/250',
-      featured: true
-    },
-    {
-      id: 3,
-      title: 'Machine Learning Workshop',
-      date: '2024-03-28',
-      time: '02:00 PM',
-      location: 'Seminar Hall',
-      description: 'Hands-on workshop on machine learning algorithms and applications.',
-      attendees: 60,
-      type: 'Workshop',
-      category: 'workshop',
-      image: '/api/placeholder/400/250',
-      featured: false
-    },
-    {
-      id: 4,
-      title: 'Alumni Meet 2024',
-      date: '2024-04-05',
-      time: '11:00 AM',
-      location: 'Campus Ground',
-      description: 'Annual alumni gathering with networking opportunities and career guidance sessions.',
-      attendees: 200,
-      type: 'Networking',
-      category: 'conference',
-      image: '/api/placeholder/400/250',
-      featured: true
-    },
-    {
-      id: 5,
-      title: 'Project Exhibition',
-      date: '2024-04-12',
-      time: '10:00 AM',
-      location: 'Exhibition Hall',
-      description: 'Showcase of innovative student projects and research work.',
-      attendees: 120,
-      type: 'Exhibition',
-      category: 'exhibition',
-      image: '/api/placeholder/400/250',
-      featured: false
-    },
-    {
-      id: 6,
-      title: 'Cultural Night',
-      date: '2024-04-18',
-      time: '07:00 PM',
-      location: 'Open Air Theater',
-      description: 'Annual cultural event featuring music, dance, and drama performances.',
-      attendees: 300,
-      type: 'Cultural',
-      category: 'cultural',
-      image: '/api/placeholder/400/250',
-      featured: false
-    }
-  ]
+  // Map event categories to database types
+  const getCategoryForEvent = (event: any) => {
+    const title = event.title.toLowerCase()
+    const description = event.description.toLowerCase()
+    const type = event.type?.toLowerCase() || ''
+    
+    if (title.includes('conference') || type.includes('conference')) return 'conference'
+    if (title.includes('workshop') || type.includes('workshop') || description.includes('workshop')) return 'workshop'
+    if (title.includes('competition') || title.includes('hackathon') || type.includes('competition')) return 'competition'
+    if (title.includes('exhibition') || title.includes('showcase') || type.includes('exhibition')) return 'exhibition'
+    if (title.includes('cultural') || title.includes('music') || title.includes('dance') || type.includes('cultural')) return 'cultural'
+    return 'conference' // default category
+  }
 
   // Filter events based on category and search term
-  const filteredEvents = allEvents.filter(event => {
-    const matchesCategory = selectedCategory === 'all' || event.category === selectedCategory
+  const filteredEvents = events.filter(event => {
+    const eventCategory = getCategoryForEvent(event)
+    const matchesCategory = selectedCategory === 'all' || eventCategory === selectedCategory
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          event.description.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesCategory && matchesSearch
@@ -404,61 +319,94 @@ export default function EventsPage() {
         {/* Events Grid */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
-            All Events
+            All Events ({loading ? '...' : filteredEvents.length})
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredEvents.map((event) => (
-              <div key={event.id} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden group hover:shadow-2xl transition-all duration-300">
-                <div className="relative">
-                  <img
-                    src={event.image}
-                    alt={event.title}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {event.featured && (
-                    <div className="absolute top-4 left-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
-                      <Star className="h-4 w-4 mr-1" />
-                      Featured
+          
+          {loading ? (
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+              <p className="text-gray-500 text-lg">Loading events...</p>
+            </div>
+          ) : filteredEvents.length === 0 ? (
+            <div className="text-center py-16">
+              <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No events found</h3>
+              <p className="text-gray-500">
+                {searchTerm || selectedCategory !== 'all' 
+                  ? 'Try adjusting your search or filter criteria.' 
+                  : 'No events are currently scheduled. Check back soon!'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredEvents.map((event) => {
+                const isUpcoming = new Date(event.date) > new Date()
+                return (
+                  <div key={event.id} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden group hover:shadow-2xl transition-all duration-300">
+                    <div className="relative">
+                      <img
+                        src={event.image || '/api/placeholder/400/250'}
+                        alt={event.title}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {isUpcoming && (
+                        <div className="absolute top-4 left-4 bg-gradient-to-r from-green-400 to-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center">
+                          <Star className="h-4 w-4 mr-1" />
+                          Upcoming
+                        </div>
+                      )}
+                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                        {event.type}
+                      </div>
                     </div>
-                  )}
-                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
-                    {event.type}
+                    
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                        {event.title}
+                      </h3>
+                      <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          {new Date(event.date).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Clock className="h-4 w-4 mr-2" />
+                          {new Date(event.date).toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit' 
+                          })}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <MapPin className="h-4 w-4 mr-2" />
+                          {event.location}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Users className="h-4 w-4 mr-2" />
+                          Max {event.maxAttendees || 100} participants
+                        </div>
+                      </div>
+                      
+                      <button className={`w-full py-3 rounded-xl transition-all duration-200 flex items-center justify-center group ${
+                        isUpcoming 
+                          ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600' 
+                          : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                      }`}>
+                        {isUpcoming ? 'Register Now' : 'Event Completed'}
+                        {isUpcoming && <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />}
+                      </button>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
-                    {event.title}
-                  </h3>
-                  <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
-                  
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      {new Date(event.date).toLocaleDateString()}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock className="h-4 w-4 mr-2" />
-                      {event.time}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      {event.location}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Users className="h-4 w-4 mr-2" />
-                      {event.attendees} attendees
-                    </div>
-                  </div>
-                  
-                  <button className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-3 rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 flex items-center justify-center group">
-                    Register Now
-                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Clubs Section */}
@@ -515,6 +463,30 @@ export default function EventsPage() {
             ))}
           </div>
         </div>
+
+        {/* Statistics Section */}
+        {!loading && (
+          <div className="mb-16">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 text-center shadow-lg">
+                <div className="text-3xl font-bold text-indigo-600 mb-2">{stats.totalEvents}</div>
+                <div className="text-gray-600">Total Events</div>
+              </div>
+              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 text-center shadow-lg">
+                <div className="text-3xl font-bold text-green-600 mb-2">{stats.upcomingEvents}</div>
+                <div className="text-gray-600">Upcoming Events</div>
+              </div>
+              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 text-center shadow-lg">
+                <div className="text-3xl font-bold text-purple-600 mb-2">{stats.completedEvents}</div>
+                <div className="text-gray-600">Completed Events</div>
+              </div>
+              <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 text-center shadow-lg">
+                <div className="text-3xl font-bold text-orange-600 mb-2">6</div>
+                <div className="text-gray-600">Active Clubs</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Call to Action */}
         <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-3xl p-12 text-white text-center">

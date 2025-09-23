@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-gradient-to-br from-lightBlue-50 to-lightBlue-100 min-h-screen`}>
+      <body className={`${inter.className} bg-gradient-to-br from-blue-50 to-sky-100 min-h-screen`}>
         <AuthProvider>
           {children}
           <Toaster 

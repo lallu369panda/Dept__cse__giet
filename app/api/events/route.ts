@@ -1,88 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
-// Mock data - In production, this would come from a database
-let events = [
-  {
-    id: 1,
-    title: 'Tech Symposium 2024',
-    description: 'Annual technical symposium featuring latest innovations in computer science and engineering.',
-    date: '2024-03-15',
-    time: '09:00 AM',
-    location: 'Main Auditorium',
-    type: 'Conference',
-    category: 'conference',
-    attendees: 150,
-    maxAttendees: 200,
-    image: '/api/placeholder/800/500',
-    featured: true,
-    status: 'upcoming',
-    organizer: 'CSE Department',
-    contactEmail: 'events@cse.edu',
-    requirements: 'Open to all CSE students',
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z'
-  },
-  {
-    id: 2,
-    title: 'Hackathon Competition',
-    description: '48-hour coding competition for students to showcase their programming skills.',
-    date: '2024-03-22',
-    time: '10:00 AM',
-    location: 'Computer Lab 1',
-    type: 'Competition',
-    category: 'competition',
-    attendees: 80,
-    maxAttendees: 100,
-    image: '/api/placeholder/800/500',
-    featured: true,
-    status: 'upcoming',
-    organizer: 'CodeCraft Club',
-    contactEmail: 'hackathon@cse.edu',
-    requirements: 'Team of 2-4 members',
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z'
-  },
-  {
-    id: 3,
-    title: 'Machine Learning Workshop',
-    description: 'Hands-on workshop on machine learning algorithms and applications.',
-    date: '2024-03-28',
-    time: '02:00 PM',
-    location: 'Seminar Hall',
-    type: 'Workshop',
-    category: 'workshop',
-    attendees: 60,
-    maxAttendees: 80,
-    image: '/api/placeholder/800/500',
-    featured: false,
-    status: 'upcoming',
-    organizer: 'Innovation Lab',
-    contactEmail: 'ml-workshop@cse.edu',
-    requirements: 'Basic programming knowledge',
-    createdAt: '2024-02-01T10:00:00Z',
-    updatedAt: '2024-02-01T10:00:00Z'
-  },
-  {
-    id: 4,
-    title: 'Alumni Meet 2024',
-    description: 'Annual alumni gathering with networking opportunities and career guidance sessions.',
-    date: '2024-04-05',
-    time: '11:00 AM',
-    location: 'Campus Ground',
-    type: 'Networking',
-    category: 'conference',
-    attendees: 200,
-    maxAttendees: 300,
-    image: '/api/placeholder/800/500',
-    featured: true,
-    status: 'upcoming',
-    organizer: 'Alumni Association',
-    contactEmail: 'alumni@cse.edu',
-    requirements: 'Open to all',
-    createdAt: '2024-02-10T10:00:00Z',
-    updatedAt: '2024-02-10T10:00:00Z'
-  }
-]
+// In-memory cache for events data
+const cache = new Map()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 export async function GET(request: NextRequest) {
   try {
@@ -94,45 +15,93 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
 
-    let filteredEvents = [...events]
+    // Create cache key for this request
+    const cacheKey = `events:${category || 'all'}:${status || 'all'}:${featured || 'false'}:${search || ''}:${page}:${limit}`
+    
+    // Check cache first
+    if (cache.has(cacheKey)) {
+      const cachedData = cache.get(cacheKey)
+      if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
+        return NextResponse.json(cachedData.data)
+      }
+    }
 
-    // Apply filters
+    // Build where condition for Prisma
+    const where: any = {}
+
     if (category && category !== 'all') {
-      filteredEvents = filteredEvents.filter(event => event.category === category)
+      where.category = category
     }
 
     if (status && status !== 'all') {
-      filteredEvents = filteredEvents.filter(event => event.status === status)
+      where.status = status
     }
 
     if (featured === 'true') {
-      filteredEvents = filteredEvents.filter(event => event.featured === true)
+      where.featured = true
     }
 
     if (search) {
       const searchLower = search.toLowerCase()
-      filteredEvents = filteredEvents.filter(event =>
-        event.title.toLowerCase().includes(searchLower) ||
-        event.description.toLowerCase().includes(searchLower) ||
-        event.type.toLowerCase().includes(searchLower)
-      )
+      where.OR = [
+        { title: { contains: searchLower, mode: 'insensitive' } },
+        { description: { contains: searchLower, mode: 'insensitive' } },
+        { type: { contains: searchLower, mode: 'insensitive' } }
+      ]
     }
 
-    // Pagination
-    const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedEvents = filteredEvents.slice(startIndex, endIndex)
+    // Get both count and events in parallel with optimized select
+    const [totalEvents, events] = await Promise.all([
+      prisma.event.count({ where }),
+      prisma.event.findMany({
+        where,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          date: true,
+          time: true,
+          location: true,
+          type: true,
+          category: true,
+          attendees: true,
+          maxAttendees: true,
+          image: true,
+          featured: true,
+          status: true,
+          organizer: true,
+          contactEmail: true,
+          requirements: true,
+          createdAt: true,
+          updatedAt: true
+        },
+        orderBy: [
+          { featured: 'desc' },
+          { date: 'asc' }
+        ],
+        skip: (page - 1) * limit,
+        take: limit
+      })
+    ])
 
-    return NextResponse.json({
-      events: paginatedEvents,
+    const response = {
+      events,
       pagination: {
         currentPage: page,
-        totalPages: Math.ceil(filteredEvents.length / limit),
-        totalEvents: filteredEvents.length,
-        hasNext: endIndex < filteredEvents.length,
+        totalPages: Math.ceil(totalEvents / limit),
+        totalEvents,
+        hasNext: page * limit < totalEvents,
         hasPrev: page > 1
       }
+    }
+
+    // Cache the response
+    cache.set(cacheKey, {
+      data: response,
+      timestamp: Date.now()
     })
+
+    return NextResponse.json(response)
   } catch (error) {
     console.error('Error fetching events:', error)
     return NextResponse.json(
@@ -160,39 +129,38 @@ export async function POST(request: NextRequest) {
       organizer,
       contactEmail,
       requirements,
-      featured = false
+      featured = false,
+      image
     } = body
 
     // Validate required fields
-    if (!title || !description || !date || !time || !location || !type) {
+    if (!title || !description || !date || !time || !location || !type || !organizer || !contactEmail) {
       return NextResponse.json(
         { message: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    const newEvent = {
-      id: events.length + 1,
-      title,
-      description,
-      date,
-      time,
-      location,
-      type,
-      category: category || 'general',
-      attendees: 0,
-      maxAttendees: maxAttendees || 100,
-      image: '/api/placeholder/800/500',
-      featured,
-      status: 'upcoming',
-      organizer: organizer || 'CSE Department',
-      contactEmail: contactEmail || 'events@cse.edu',
-      requirements: requirements || 'Open to all',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-
-    events.push(newEvent)
+    // Create new event in database
+    const newEvent = await prisma.event.create({
+      data: {
+        title,
+        description,
+        date: new Date(date),
+        time,
+        location,
+        type,
+        category: category || 'general',
+        attendees: 0,
+        maxAttendees: maxAttendees || 100,
+        image: image || '/uploads/events/default-event.jpg',
+        featured,
+        status: 'upcoming',
+        organizer,
+        contactEmail,
+        requirements: requirements || 'Open to all'
+      }
+    })
 
     return NextResponse.json(
       { message: 'Event created successfully', event: newEvent },

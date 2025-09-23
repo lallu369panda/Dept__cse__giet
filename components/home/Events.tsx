@@ -1,80 +1,44 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Image from 'next/image'
+import { useEvents, eventNotifier } from '@/hooks/useEvents'
 import { Calendar, MapPin, Clock, Users, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+
+interface Event {
+  id: string
+  title: string
+  description: string
+  date: string
+  time: string
+  location: string
+  type: string
+  category: string
+  attendees: number
+  maxAttendees?: number
+  image?: string
+  featured: boolean
+  status: string
+  organizer: string
+  contactEmail: string
+  requirements?: string
+  createdAt: string
+  updatedAt: string
+}
 
 export default function Events() {
   const [currentEventIndex, setCurrentEventIndex] = useState(0)
+  const { featuredEvents: events, upcomingEvents, loading, error, refreshEvents } = useEvents()
 
-  const events = [
-    {
-      id: 1,
-      title: 'Tech Symposium 2024',
-      date: '2024-03-15',
-      time: '09:00 AM',
-      location: 'Main Auditorium',
-      description: 'Annual technical symposium featuring latest innovations in computer science and engineering.',
-      attendees: 150,
-      type: 'Conference',
-      image: '/api/placeholder/400/250'
-    },
-    {
-      id: 2,
-      title: 'Hackathon Competition',
-      date: '2024-03-22',
-      time: '10:00 AM',
-      location: 'Computer Lab 1',
-      description: '48-hour coding competition for students to showcase their programming skills.',
-      attendees: 80,
-      type: 'Competition',
-      image: '/api/placeholder/400/250'
-    },
-    {
-      id: 3,
-      title: 'Industry Workshop',
-      date: '2024-03-28',
-      time: '02:00 PM',
-      location: 'Seminar Hall',
-      description: 'Workshop on emerging technologies with industry experts and hands-on sessions.',
-      attendees: 60,
-      type: 'Workshop',
-      image: '/api/placeholder/400/250'
-    },
-    {
-      id: 4,
-      title: 'Alumni Meet 2024',
-      date: '2024-04-05',
-      time: '11:00 AM',
-      location: 'Campus Ground',
-      description: 'Annual alumni gathering with networking opportunities and career guidance sessions.',
-      attendees: 200,
-      type: 'Networking',
-      image: '/api/placeholder/400/250'
-    }
-  ]
+  // Subscribe to event updates
+  useEffect(() => {
+    const unsubscribe = eventNotifier.subscribe(() => {
+      // This will trigger a refresh when events are updated from admin
+      refreshEvents()
+    })
 
-  const upcomingEvents = [
-    {
-      title: 'Machine Learning Workshop',
-      date: '2024-04-12',
-      type: 'Workshop'
-    },
-    {
-      title: 'Coding Contest Finals',
-      date: '2024-04-18',
-      type: 'Competition'
-    },
-    {
-      title: 'Guest Lecture Series',
-      date: '2024-04-25',
-      type: 'Lecture'
-    },
-    {
-      title: 'Project Exhibition',
-      date: '2024-05-02',
-      type: 'Exhibition'
-    }
-  ]
+    return unsubscribe
+  }, [refreshEvents])
 
   const nextEvent = () => {
     setCurrentEventIndex((prev) => (prev + 1) % events.length)
@@ -85,6 +49,40 @@ export default function Events() {
   }
 
   const currentEvent = events[currentEventIndex]
+
+  if (loading) {
+    return (
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading events...</p>
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-red-600">Error: {error}</p>
+        </div>
+      </section>
+    )
+  }
+
+  if (events.length === 0) {
+    return (
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Department Events
+          </h2>
+          <p className="text-xl text-gray-600">No events available at the moment.</p>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
@@ -102,29 +100,67 @@ export default function Events() {
         <div className="mb-16">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden">
             <div className="relative">
-              <div className="aspect-video bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center">
-                <div className="text-center text-white p-8">
-                  <h3 className="text-3xl font-bold mb-4">{currentEvent.title}</h3>
-                  <p className="text-xl mb-6">{currentEvent.description}</p>
-                  <div className="flex flex-wrap justify-center gap-6 text-lg">
-                    <div className="flex items-center">
-                      <Calendar className="h-5 w-5 mr-2" />
-                      {new Date(currentEvent.date).toLocaleDateString()}
+              <div className="aspect-video relative overflow-hidden">
+                {currentEvent.image && currentEvent.image !== '/api/placeholder/400/250' ? (
+                  <>
+                    <Image
+                      src={currentEvent.image}
+                      alt={currentEvent.title}
+                      fill
+                      className="object-cover"
+                      priority={currentEventIndex === 0}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <div className="text-center text-white p-8">
+                        <h3 className="text-3xl font-bold mb-4">{currentEvent.title}</h3>
+                        <p className="text-xl mb-6">{currentEvent.description}</p>
+                        <div className="flex flex-wrap justify-center gap-6 text-lg">
+                          <div className="flex items-center">
+                            <Calendar className="h-5 w-5 mr-2" />
+                            {new Date(currentEvent.date).toLocaleDateString()}
+                          </div>
+                          <div className="flex items-center">
+                            <Clock className="h-5 w-5 mr-2" />
+                            {currentEvent.time}
+                          </div>
+                          <div className="flex items-center">
+                            <MapPin className="h-5 w-5 mr-2" />
+                            {currentEvent.location}
+                          </div>
+                          <div className="flex items-center">
+                            <Users className="h-5 w-5 mr-2" />
+                            {currentEvent.attendees} attendees
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <Clock className="h-5 w-5 mr-2" />
-                      {currentEvent.time}
-                    </div>
-                    <div className="flex items-center">
-                      <MapPin className="h-5 w-5 mr-2" />
-                      {currentEvent.location}
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="h-5 w-5 mr-2" />
-                      {currentEvent.attendees} attendees
+                  </>
+                ) : (
+                  <div className="bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center h-full">
+                    <div className="text-center text-white p-8">
+                      <h3 className="text-3xl font-bold mb-4">{currentEvent.title}</h3>
+                      <p className="text-xl mb-6">{currentEvent.description}</p>
+                      <div className="flex flex-wrap justify-center gap-6 text-lg">
+                        <div className="flex items-center">
+                          <Calendar className="h-5 w-5 mr-2" />
+                          {new Date(currentEvent.date).toLocaleDateString()}
+                        </div>
+                        <div className="flex items-center">
+                          <Clock className="h-5 w-5 mr-2" />
+                          {currentEvent.time}
+                        </div>
+                        <div className="flex items-center">
+                          <MapPin className="h-5 w-5 mr-2" />
+                          {currentEvent.location}
+                        </div>
+                        <div className="flex items-center">
+                          <Users className="h-5 w-5 mr-2" />
+                          {currentEvent.attendees} attendees
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
               
               {/* Navigation Arrows */}
@@ -163,8 +199,8 @@ export default function Events() {
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
             <h3 className="text-2xl font-bold text-gray-900 mb-6">Upcoming Events</h3>
             <div className="space-y-4">
-              {upcomingEvents.map((event, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+              {upcomingEvents.map((event) => (
+                <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
                   <div>
                     <h4 className="font-semibold text-gray-900">{event.title}</h4>
                     <p className="text-sm text-gray-600">{new Date(event.date).toLocaleDateString()}</p>

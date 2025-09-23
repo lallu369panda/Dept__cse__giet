@@ -95,6 +95,14 @@ const handler = NextAuth({
               studentId: 'CSE2024001',
               department: 'CSE',
               semester: '3'
+            },
+            {
+              id: '2',
+              email: 'admin@demo.com',
+              password: 'admin123',
+              name: 'Admin User',
+              role: 'admin',
+              department: 'CSE'
             }
           ]
 
@@ -110,8 +118,8 @@ const handler = NextAuth({
               studentId: demoUser.studentId || undefined,
               department: demoUser.department,
               semester: demoUser.semester || undefined,
-              linkedin: 'https://linkedin.com/in/demo-student',
-              github: 'https://github.com/demo-student'
+              linkedin: demoUser.role === 'student' ? 'https://linkedin.com/in/demo-student' : undefined,
+              github: demoUser.role === 'student' ? 'https://github.com/demo-student' : undefined
             }
           }
 

@@ -18,9 +18,13 @@ export default function Home() {
   useEffect(() => {
     if (status === 'loading') return
     
-    if (session) {
-      // Redirect to student dashboard (only role available)
-      router.push('/dashboard/student')
+    if (session?.user?.role) {
+      // Redirect based on user role
+      if (session.user.role === 'admin') {
+        router.push('/dashboard/admin')
+      } else {
+        router.push('/dashboard/student')
+      }
     } else {
       setLoading(false)
     }
@@ -31,7 +35,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lightBlue-50 to-lightBlue-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
       <Header />
       <main>
         <Hero />

@@ -33,8 +33,12 @@ export default function LoginPage() {
         toast.success('Login successful!')
         const session = await getSession()
         
-        // Redirect to student dashboard (only role available)
-        router.push('/dashboard/student')
+        // Redirect based on user role
+        if (session?.user?.role === 'admin') {
+          router.push('/dashboard/admin/events')
+        } else {
+          router.push('/dashboard/student')
+        }
       }
     } catch (error) {
       toast.error('An error occurred. Please try again.')
@@ -84,6 +88,7 @@ export default function LoginPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
               >
                 <option value="student">Student</option>
+                <option value="admin">Administrator</option>
               </select>
             </div>
 
@@ -173,8 +178,12 @@ export default function LoginPage() {
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-blue-800">Demo Credentials</h3>
-                <div className="mt-2 text-sm text-blue-700">
+                <div className="mt-2 text-sm text-blue-700 space-y-1">
                   <p><strong>Student:</strong> student@demo.com / password123</p>
+                  <p><strong>Admin:</strong> admin@cse.edu / admin123</p>
+                  <p className="text-xs text-blue-600 mt-2">
+                    Or use: admin@demo.com / admin123
+                  </p>
                 </div>
               </div>
             </div>

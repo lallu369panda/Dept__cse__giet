@@ -17,7 +17,7 @@ model User {
   email       String   @unique
   phone       String
   password    String
-  role        String   @default("student") // Only students
+  role        String   @default("student") // student, admin, faculty
   department  String   @default("CSE")
   
   // Student fields
@@ -70,4 +70,44 @@ model Announcement {
   updatedAt   DateTime @updatedAt
 
   @@map("announcements")
+}
+
+model QuestionPaper {
+  id          String   @id @default(cuid())
+  subjectName String
+  examType    String   // "mid", "sem", "final", "quiz"
+  semester    String   // "1", "2", "3", etc.
+  year        String   // "2024", "2023", etc.
+  description String?
+  fileUrl     String   // URL to the question paper file
+  fileName    String   // Original file name
+  fileSize    Int?     // File size in bytes
+  uploadedBy  String   // User who uploaded the file
+  downloads   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("question_papers")
+}
+
+model Note {
+  id          String   @id @default(cuid())
+  title       String
+  subjectName String
+  semester    String   // "1", "2", "3", etc.
+  year        String   @default("2024") // "2024", "2023", etc.
+  description String?
+  fileUrl     String   // URL to the notes file
+  fileName    String   // Original file name
+  fileSize    Int?     // File size in bytes
+  type        String   @default("Complete Notes") // "Complete Notes", "Quick Reference", "Chapter Notes", etc.
+  chapters    String?  // JSON string of chapters covered
+  uploadedBy  String   // User who uploaded the file
+  downloads   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("notes")
 }

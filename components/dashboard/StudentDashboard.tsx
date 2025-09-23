@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useEvents, eventNotifier } from '@/hooks/useEvents'
 import { 
   BookOpen, 
   BarChart3, 
@@ -19,7 +20,9 @@ import {
   X,
   Linkedin,
   Github,
-  ExternalLink
+  ExternalLink,
+  MapPin,
+  Users
 } from 'lucide-react'
 
 interface User {
@@ -47,6 +50,7 @@ export default function StudentDashboard({ user }: StudentDashboardProps) {
     github: user.github || 'https://github.com/student-username'
   })
   const [isLoading, setIsLoading] = useState(false)
+  const { upcomingEvents, stats, loading: eventsLoading } = useEvents()
 
   // Mock data - in real app, this would come from API
   const studentData = {
@@ -326,27 +330,29 @@ export default function StudentDashboard({ user }: StudentDashboardProps) {
   const renderQuestionPapers = () => (
     <div className="space-y-6">
       <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Question Papers Archive</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {['Data Structures', 'Computer Networks', 'Database Systems', 'Operating Systems', 'Software Engineering', 'Algorithms'].map((subject, index) => (
-            <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium text-gray-900">{subject}</h4>
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">CSE</span>
-              </div>
-              <p className="text-sm text-gray-600 mb-3">Previous year question papers</p>
-              <div className="flex space-x-2">
-                <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 transition-colors">
-                  <Download className="h-4 w-4 inline mr-1" />
-                  Download
-                </button>
-                <button className="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-50 transition-colors">
-                  <Eye className="h-4 w-4 inline mr-1" />
-                  Preview
-                </button>
-              </div>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Question Papers Archive</h3>
+          <a 
+            href="/question-papers"
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            View All
+          </a>
+        </div>
+        <div className="text-center py-8">
+          <FileText className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600 text-lg mb-2">Browse Question Papers</p>
+          <p className="text-sm text-gray-500 mb-4">
+            Access previous year question papers and notes organized by semester and subject
+          </p>
+          <a 
+            href="/question-papers"
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200"
+          >
+            <BookOpen className="h-5 w-5 mr-2" />
+            Explore Question Papers & Notes
+          </a>
         </div>
       </div>
     </div>
@@ -357,11 +363,74 @@ export default function StudentDashboard({ user }: StudentDashboardProps) {
       <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Department Events</h3>
         <div className="space-y-4">
-          <div className="text-center py-12">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">No upcoming events</p>
-            <p className="text-sm text-gray-400 mt-2">Department events will be listed here when available</p>
-          </div>
+          {eventsLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading events...</p>
+            </div>
+          ) : upcomingEvents.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg">No upcoming events</p>
+              <p className="text-sm text-gray-400 mt-2">Department events will be listed here when available</p>
+            </div>
+          ) : (
+            upcomingEvents.map((event) => (
+              <div key={event.id} className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-3">
+                  <h4 className="font-semibold text-gray-900 text-lg">{event.title}</h4>
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Upcoming
+                  </span>
+                </div>
+                
+                <div className="space-y-2 text-sm text-gray-600 mb-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>{new Date(event.date).toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>{event.location}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    <span>Max {event.maxAttendees || 100} participants</span>
+                  </div>
+                </div>
+
+                {event.description && (
+                  <p className="text-sm text-gray-700 mb-3 line-clamp-3">
+                    {event.description}
+                  </p>
+                )}
+
+                {event.image && (
+                  <div className="mb-3">
+                    <img 
+                      src={event.image} 
+                      alt={event.title}
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center pt-3 border-t">
+                  <span className="text-xs text-gray-500">
+                    Type: {event.type}
+                  </span>
+                  <button className="px-4 py-2 bg-indigo-500 text-white text-sm rounded-lg hover:bg-indigo-600 transition-colors">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

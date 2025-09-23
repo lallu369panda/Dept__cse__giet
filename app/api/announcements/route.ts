@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// In-memory cache for announcements data
+const cache = new Map()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
 // Mock data - In production, this would come from a database
 let announcements = [
   {
@@ -85,6 +89,17 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
 
+    // Create cache key for this request
+    const cacheKey = `announcements:${type || 'all'}:${priority || 'all'}:${targetAudience || 'all'}:${search || ''}:${isActive || ''}:${page}:${limit}`
+    
+    // Check cache first
+    if (cache.has(cacheKey)) {
+      const cachedData = cache.get(cacheKey)
+      if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
+        return NextResponse.json(cachedData.data)
+      }
+    }
+
     let filteredAnnouncements = [...announcements]
 
     // Apply filters
@@ -131,7 +146,7 @@ export async function GET(request: NextRequest) {
     const endIndex = startIndex + limit
     const paginatedAnnouncements = filteredAnnouncements.slice(startIndex, endIndex)
 
-    return NextResponse.json({
+    const response = {
       announcements: paginatedAnnouncements,
       pagination: {
         currentPage: page,
@@ -140,7 +155,15 @@ export async function GET(request: NextRequest) {
         hasNext: endIndex < filteredAnnouncements.length,
         hasPrev: page > 1
       }
+    }
+
+    // Cache the response
+    cache.set(cacheKey, {
+      data: response,
+      timestamp: Date.now()
     })
+
+    return NextResponse.json(response)
   } catch (error) {
     console.error('Error fetching announcements:', error)
     return NextResponse.json(

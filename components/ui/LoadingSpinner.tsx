@@ -1,6 +1,6 @@
 export default function LoadingSpinner() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lightBlue-50 to-lightBlue-100 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-sky-100 flex items-center justify-center">
       <div className="text-center">
         <div className="relative">
           <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
