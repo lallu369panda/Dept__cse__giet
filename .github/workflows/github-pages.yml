@@ -1,8 +1,25 @@
-name: Deploy to Vercel
+name: Build and Test
 
-on:
-  push:
-    branches: [ main ]
+o    - name: Install dependencies
+      run: |
+        rm -f package-lock.json
+        npm install --legacy-peer-deps
+      
+    - name: Generate Prisma Client
+      run: npx prisma generate
+      env:
+        DATABASE_URL: "file:./prisma/dev.db"
+        
+    - name: Run build
+      run: npm run build
+      env:
+        NEXTAUTH_URL: "http://localhost:3000"
+        NEXTAUTH_SECRET: "github-actions-build-secret-key-12345678901234567890"
+        DATABASE_URL: "file:./prisma/dev.db"
+        NODE_ENV: "production"
+        
+    - name: Build Success ✅
+      run: echo "✅ Build completed successfully! Ready for deployment 🚀"anches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -20,8 +37,13 @@ jobs:
         node-version: '18'
         cache: 'npm'
         
+    - name: Clean npm cache
+      run: npm cache clean --force
+        
     - name: Install dependencies
-      run: npm ci
+      run: |
+        rm -f package-lock.json
+        npm install
       
     - name: Generate Prisma Client
       run: npx prisma generate
