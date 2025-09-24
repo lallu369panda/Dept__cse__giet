@@ -41,7 +41,7 @@ export default function EventsPage() {
   // Featured events for slideshow (use real data)
   const featuredEvents = upcomingEvents.slice(0, 5) // Show first 5 upcoming events
   const eventPhotos = featuredEvents.length > 0 ? featuredEvents.map(event => ({
-    src: event.image || '/api/placeholder/800/500',
+    src: event.image || 'https://placehold.co/800x500/3B82F6/FFFFFF/png?text=Event+Photo',
     alt: event.title,
     title: event.title,
     description: event.description,
@@ -345,7 +345,7 @@ export default function EventsPage() {
                   <div key={event.id} className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden group hover:shadow-2xl transition-all duration-300">
                     <div className="relative">
                       <img
-                        src={event.image || '/api/placeholder/400/250'}
+                        src={event.image || 'https://placehold.co/400x250/3B82F6/FFFFFF/png?text=Event+Image'}
                         alt={event.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />

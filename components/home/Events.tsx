@@ -109,6 +109,10 @@ export default function Events() {
                       fill
                       className="object-cover"
                       priority={currentEventIndex === 0}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://placehold.co/800x450/3B82F6/FFFFFF/png?text=Event+Image';
+                      }}
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                       <div className="text-center text-white p-8">
